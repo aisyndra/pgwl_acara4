@@ -3,15 +3,27 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\PolylinesModel;
 
 class PolylinesController extends Controller
 {
+    protected $polylines;
+
+    public function __construct()
+    {
+        $this->polylines = new PolylinesModel();
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        $data = [
+            'title' => 'Map',
+        ];
+
+        return view ('map', $data);
     }
 
     /**
@@ -19,7 +31,7 @@ class PolylinesController extends Controller
      */
     public function create()
     {
-        //
+
     }
 
     /**
@@ -27,15 +39,44 @@ class PolylinesController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        // Validate request
+        $request->validate(
+            [
+                'name' => 'required|unique:points,name',
+                'description' => 'required',
+                'geom_points'=> 'required',
+            ],
+            [
+                'name.required' => 'Name is required',
+                'name.unique' => 'Name already exists',
+                'description.required' => 'Description is required',
+                'geom_points.required' => 'Geometry point is required',
+            ]
+            );
 
+
+        // Insert data
+        $data = [
+            'geom'=> $request->geom_polyline,
+            'name'=> $request->name,
+            'description'=> $request-> description,
+           ];
+
+       //insert
+    if (!$this->polylines->create($data)) {
+        return redirect()->route('map')->with('Error', 'Point Failed To Add');
+    };
+
+    //redirect to map
+
+    return redirect()->route('map')->with('success', 'Point has been added');
+    }
     /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
-        //
+//
     }
 
     /**
@@ -43,7 +84,7 @@ class PolylinesController extends Controller
      */
     public function edit(string $id)
     {
-        //
+
     }
 
     /**
@@ -51,7 +92,8 @@ class PolylinesController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+
+
     }
 
     /**
@@ -59,6 +101,6 @@ class PolylinesController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+
     }
 }
