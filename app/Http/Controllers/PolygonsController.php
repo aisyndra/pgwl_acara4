@@ -17,7 +17,7 @@ class PolygonsController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json($this->polygons->geojson_polygon());
     }
 
     /**
@@ -43,7 +43,7 @@ class PolygonsController extends Controller
                 'name.required' => 'Name is required',
                 'name.unique' => 'Name already exists',
                 'description.required' => 'Description is required',
-                'geom_polygon.required' => 'Geometry polyline is required',
+                'geom_polygon.required' => 'Geometry polygon is required',
             ]
             );
 

@@ -4,103 +4,80 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PolylinesModel;
+use Illuminate\Support\Facades\DB; // Pastikan ini ada
 
 class PolylinesController extends Controller
 {
-    protected $polylines;
-
     public function __construct()
     {
-        $this->polylines = new PolylinesModel();
+        $this->polyline = new PolylinesModel();
     }
 
     /**
-     * Display a listing of the resource.
+     * Mengambil data semua polylines dalam format GeoJSON
      */
     public function index()
     {
-        $data = [
-            'title' => 'Map',
-        ];
-
-        return view ('map', $data);
+        return response()->json($this->polyline->geojson_polylines());
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-
-    }
-
-    /**
-     * Store a newly created resource in storage.
+     * Menyimpan polyline baru ke database
      */
     public function store(Request $request)
     {
-        // Validate request
-        $request->validate(
-            [
-                'name' => 'required|unique:points,name',
-                'description' => 'required',
-                'geom_points'=> 'required',
-            ],
-            [
-                'name.required' => 'Name is required',
-                'name.unique' => 'Name already exists',
-                'description.required' => 'Description is required',
-                'geom_points.required' => 'Geometry point is required',
-            ]
-            );
+        // Validasi request
+        $request->validate([
+            'name' => 'required|unique:polyline,name',
+            'description' => 'required',
+            'geom_polyline' => 'required|json',
+        ], [
+            'name.required' => 'Name is required',
+            'name.unique' => 'Name already exists',
+            'description.required' => 'Description is required',
+            'geom_polyline.required' => 'Geometry polylines is required',
+            'geom_polyline.json' => 'Geometry must be in GeoJSON format',
+        ]);
 
-
-        // Insert data
+        // Insert data ke database
         $data = [
-            'geom'=> $request->geom_polyline,
-            'name'=> $request->name,
-            'description'=> $request-> description,
-           ];
+            'geom' => DB::raw("ST_GeomFromGeoJSON('" . $request->geom_polyline . "')"),
+            'name' => $request->name,
+            'description' => $request->description,
+        ];
 
-       //insert
-    if (!$this->polylines->create($data)) {
-        return redirect()->route('map')->with('Error', 'Point Failed To Add');
-    };
-
-    //redirect to map
-
-    return redirect()->route('map')->with('success', 'Point has been added');
-    }
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-//
+        // Coba insert ke database
+        try {
+            $this->polyline->create($data);
+            return response()->json(['message' => 'Polyline has been added'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Polyline Failed To Add', 'details' => $e->getMessage()], 500);
+        }
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Mengambil satu polyline berdasarkan ID
      */
-    public function edit(string $id)
+    public function show($id)
     {
-
+        $polyline = $this->polyline->find($id);
+        if (!$polyline) {
+            return response()->json(['error' => 'Polyline not found'], 404);
+        }
+        return response()->json($polyline);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Menghapus polyline berdasarkan ID
      */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
+        $polyline = $this->polyline->find($id);
+        if (!$polyline) {
+            return response()->json(['error' => 'Polyline not found'], 404);
+        }
 
-
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-
+        $polyline->delete();
+        return response()->json(['message' => 'Polyline has been deleted']);
     }
 }
