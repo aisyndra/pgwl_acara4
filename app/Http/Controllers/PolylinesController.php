@@ -30,7 +30,8 @@ class PolylinesController extends Controller
         $request->validate([
             'name' => 'required|unique:polyline,name',
             'description' => 'required',
-            'geom_polyline' => 'required|json',
+            'geom_polyline' => 'required',
+            'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:250',
         ], [
             'name.required' => 'Name is required',
             'name.unique' => 'Name already exists',
@@ -39,11 +40,26 @@ class PolylinesController extends Controller
             'geom_polyline.json' => 'Geometry must be in GeoJSON format',
         ]);
 
+         // Create images directory if not exist
+         if (!is_dir('storage/images')) {
+            mkdir('./storage/images', 0777);
+        }
+
+        // Get image file
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $name_image = time() . "_polyline." . strtolower($image->getClientOriginalExtension());
+            $image->move('storage/images', $name_image);
+        } else {
+            $name_image = null;
+        }
+
         // Insert data ke database
         $data = [
-            'geom' => DB::raw("ST_GeomFromGeoJSON('" . $request->geom_polyline . "')"),
+            'geom' => $request -> geom_polyline,
             'name' => $request->name,
             'description' => $request->description,
+            'image' => $name_image,
         ];
 
         // Coba insert ke database
