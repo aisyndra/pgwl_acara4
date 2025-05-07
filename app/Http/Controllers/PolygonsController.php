@@ -38,7 +38,7 @@ class PolygonsController extends Controller
                 'name' => 'required|unique:polygon,name',
                 'description' => 'required',
                 'geom_polygon'=> 'required',
-                'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:500',
+                'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:1000',
             ],
             [
                 'name.required' => 'Name is required',
@@ -56,7 +56,7 @@ class PolygonsController extends Controller
         // Get image file
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $name_image = time() . "_polyline." . strtolower($image->getClientOriginalExtension());
+            $name_image = time() . "_polygon." . strtolower($image->getClientOriginalExtension());
             $image->move('storage/images', $name_image);
         } else {
             $name_image = null;
@@ -110,6 +110,19 @@ class PolygonsController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $imagefile = $this->polygons->find($id)->image;
+
+        if(!$this->polygons->destroy($id)) {
+         return redirect()->route('map')->with('error', 'Polygon failed to delete');
+        }
+
+        //DELETE IMAGEFILE
+        if ($imagefile !=null){
+         if (file_exists('./storage/images/'. $imagefile)) {
+             unlink('./storage/images/'. $imagefile);
+         }
+        }
+
+        return redirect()->route('map')->with('success', 'Polygon has been delete');
     }
 }

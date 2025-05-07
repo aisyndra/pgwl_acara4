@@ -36,6 +36,7 @@ class PolylinesModel extends Model
                 'type' => 'Feature',
                 'geometry' => json_decode($p->geom, true, 512, JSON_THROW_ON_ERROR),
                 'properties' => [
+                    'id' => $p->id,
                     'name' => $p->name,
                     'description' => $p->description,
                     'image' => $p->image,

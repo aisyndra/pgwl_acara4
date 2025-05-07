@@ -31,7 +31,7 @@ class PolylinesController extends Controller
             'name' => 'required|unique:polyline,name',
             'description' => 'required',
             'geom_polyline' => 'required',
-            'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:250',
+            'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:1000',
         ], [
             'name.required' => 'Name is required',
             'name.unique' => 'Name already exists',
@@ -62,25 +62,44 @@ class PolylinesController extends Controller
             'image' => $name_image,
         ];
 
-        // Coba insert ke database
-        try {
-            $this->polyline->create($data);
-            return response()->json(['message' => 'Polyline has been added'], 201);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Polyline Failed To Add', 'details' => $e->getMessage()], 500);
-        }
-    }
+        // insert
+if (!$this->polyline->create($data)) {
+    return redirect()->route('map')->with('error', 'Polyline Failed To Add');
+}
+
+// redirect to map
+return redirect()->route('map')->with('success', 'Polyline has been added');
+
 
     /**
      * Mengambil satu polyline berdasarkan ID
      */
-    public function show($id)
+
+    //insert
+    if (!$this->points->create($data)) {
+        return redirect()->route('map')->with('Error', 'Point Failed To Add');
+    };
+
+    //redirect to map
+
+    return redirect()->route('map')->with('success', 'Point has been added');
+
+
+    }
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
     {
-        $polyline = $this->polyline->find($id);
-        if (!$polyline) {
-            return response()->json(['error' => 'Polyline not found'], 404);
-        }
-        return response()->json($polyline);
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
     }
 
     /**
@@ -88,12 +107,20 @@ class PolylinesController extends Controller
      */
     public function destroy($id)
     {
-        $polyline = $this->polyline->find($id);
-        if (!$polyline) {
-            return response()->json(['error' => 'Polyline not found'], 404);
+        $imagefile = $this->polyline->find($id)->image;
+
+        if(!$this->polyline->destroy($id)) {
+         return redirect()->route('map')->with('error', 'Polyline failed to delete');
         }
 
-        $polyline->delete();
-        return response()->json(['message' => 'Polyline has been deleted']);
+        //DELETE IMAGEFILE
+        if ($imagefile !=null){
+         if (file_exists('./storage/images/'. $imagefile)) {
+             unlink('./storage/images/'. $imagefile);
+         }
+        }
+
+        return redirect()->route('map')->with('success', 'Polyline has been delete');
+
     }
 }
