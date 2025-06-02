@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PolygonsModel;
+use Illuminate\Validation\Rule;
+
 
 class PolygonsController extends Controller
 {
     public function __construct()
     {
-        $this->polygons = new PolygonsModel();
+        $this->polygon = new PolygonsModel();
     }
 
     /**
@@ -17,8 +19,12 @@ class PolygonsController extends Controller
      */
     public function index()
     {
-        return response()->json($this->polygons->geojson_polygon());
-    }
+        $data = [
+                    'title' => 'Map',
+                ];
+
+                return view('map', $data);
+            }
 
     /**
      * Show the form for creating a new resource.
@@ -68,10 +74,11 @@ class PolygonsController extends Controller
         'name'=> $request->name,
         'description'=> $request-> description,
         'image' => $name_image,
+        'user_id' => auth()->user()->id,
        ];
 
         //insert
-    if (!$this->polygons->create($data)) {
+    if (!$this->polygon->create($data)) {
         return redirect()->route('map')->with('Error', 'Polygon Failed To Add');
     };
 
@@ -94,7 +101,12 @@ class PolygonsController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $data = [
+            'title' => 'Edit Polygon',
+            'id' => $id,
+        ];
+
+        return view('edit-polygon', $data);
     }
 
     /**
@@ -102,23 +114,79 @@ class PolygonsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+          $request->validate(
+            [
+                'name' => [
+                    'required',
+                    Rule::unique('polygon', 'name')->ignore($id),
+                ],
+                'description' => 'required',
+                'geom_polygon' => 'required',
+                'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:500',
+            ],
+            [
+                'name.required' => 'Name is required',
+                'name.unique' => 'Name already exists',
+                'description.required' => 'Description is required',
+                'geom_polygon.required' => 'Geometry point is required',
+            ]
+        );
+
+        if (!is_dir('storage/images')) {
+            mkdir('./storage/images', 0777);
+        }
+
+        $name_image = null;
+        //get old image
+       $old_image = $this->polygon->find($id)->image;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $name_image = time() . "_point." . strtolower($image->getClientOriginalExtension());
+            $image->move('storage/images', $name_image);
+
+            //Delete old image
+            if ($old_image != null) {
+                if(file_exists('./storage/images/' .$old_image))
+            unlink('./storage/images/'. $old_image);
+            }
+        }
+        //else {
+         //   $name_image=$old_image;
+        //}
+
+        $data = [
+            'geom' => $request->geom_polygon,
+            'name' => $request->name,
+            'description' => $request->description,
+        ];
+
+        if ($name_image !== null) {
+            $data['image'] = $name_image;
+        }
+
+        if (!$this->polygon->find($id)->update($data)) {
+            return redirect()->route('map')->with('Error', 'Polygon Failed To update');
+        }
+
+        return redirect()->route('map')->with('success', 'Polygon has been updated');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        $imagefile = $this->polygons->find($id)->image;
+        $imagefile = $this->polygon->find($id)->image;
 
-        if(!$this->polygons->destroy($id)) {
-         return redirect()->route('map')->with('error', 'Polygon failed to delete');
+        if(!$this->polygon->destroy($id)) {
+        return redirect()->route('map')->with('error', 'Polygon failed to delete');
         }
 
         //DELETE IMAGEFILE
         if ($imagefile !=null){
-         if (file_exists('./storage/images/'. $imagefile)) {
+        if (file_exists('./storage/images/'. $imagefile)) {
              unlink('./storage/images/'. $imagefile);
          }
         }

@@ -11,8 +11,9 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/points', [ApiController::class, 'points'])->name('api.points');
-Route::get('/polylines', [PolylinesController::class, 'index'])->name('api.polylines');
-Route::post('/polylines', [PolylinesController::class, 'store']);
-Route::get('/polylines/{id}', [PolylinesController::class, 'show']);
-Route::delete('/polylines/{id}', [PolylinesController::class, 'destroy']);
-Route::get('/polygon', [PolygonsController::class, 'index'])->name('api.polygon');
+Route::get('/point/{id}', [ApiController::class, 'point'])->name('api.point');
+Route::get('/polylines', [ApiController::class, 'polylines'])->name('api.polylines');
+Route::get('/polylines/{id}', [ApiController::class, 'polyline'])->name('api.polyline');
+Route::get('/polygons', [ApiController::class, 'polygons'])->name('api.polygons');
+Route::get('/polygon/{id}', [ApiController::class, 'polygon'])->name('api.polygon');
+

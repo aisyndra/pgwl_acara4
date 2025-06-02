@@ -6,41 +6,27 @@
         <tr>
             <th>No</th>
             <th>Nama</th>
-            <th>NIM</th>
-            <th>Kelas</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th>Created At</th>
+            <th>Updated At</th>
         </tr>
     </thead>
     <tbody>
+        @foreach ( $points as $p )
         <tr>
-            <td>1</td>
-            <td>Wonyoung</td>
-            <td>456</td>
-            <td>A</td>
+            <td>{{ $p->id }}</td>
+            <td>{{ $p->name }}</td>
+            <td>{{ $p->description}}</td>
+            <td>
+                <img src="{{ asset('/storage/images/' . $p->image)}}" alt=""
+                width="200" title="{{ $p->image}}">
+            </td>
+            <td>{{ $p->created_at }}</td>
+            <td>{{ $p->updated_at }}</td>
         </tr>
-        <tr>
-            <td>2</td>
-            <td>Jo Yuri</td>
-            <td>222</td>
-            <td>A</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>Ning Ning</td>
-            <td>789</td>
-            <td>A</td>
-        </tr>
-        <tr>
-            <td>4</td>
-            <td>IU</td>
-            <td>123</td>
-            <td>B</td>
-        </tr>
-        <tr>
-            <td>5</td>
-            <td>Rei</td>
-            <td>728</td>
-            <td>B</td>
-        </tr>
+
+        @endforeach
     </tbody>
 </table>
 @endsection
